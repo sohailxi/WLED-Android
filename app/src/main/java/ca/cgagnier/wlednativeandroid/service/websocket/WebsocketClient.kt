@@ -3,6 +3,7 @@ package ca.cgagnier.wlednativeandroid.service.websocket
 import android.util.Log
 import ca.cgagnier.wlednativeandroid.model.Device
 import ca.cgagnier.wlednativeandroid.model.wledapi.DeviceStateInfo
+import ca.cgagnier.wlednativeandroid.model.wledapi.State
 import com.squareup.moshi.JsonAdapter
 import com.squareup.moshi.Moshi
 import kotlinx.coroutines.CoroutineScope
@@ -16,6 +17,7 @@ import okhttp3.WebSocket
 import okhttp3.WebSocketListener
 import java.io.IOException
 import java.util.concurrent.TimeUnit
+import kotlin.jvm.java
 import kotlin.math.min
 import kotlin.math.pow
 
@@ -34,6 +36,7 @@ class WebsocketClient(device: Device) {
     private val moshi: Moshi = Moshi.Builder().build()
     private val deviceStateInfoJsonAdapter: JsonAdapter<DeviceStateInfo> =
         moshi.adapter(DeviceStateInfo::class.java)
+    private val stateJsonAdapter: JsonAdapter<State> = moshi.adapter(State::class.java)
 
     private val coroutineScope = CoroutineScope(Dispatchers.IO)
 
@@ -118,9 +121,24 @@ class WebsocketClient(device: Device) {
         }
     }
 
-    fun sendMessage(message: String): Boolean {
+    /**
+     * Sends a message to the device.
+     * @param message The message to send.
+     */
+    private fun sendMessage(message: String): Boolean {
+        Log.d(TAG, "Sending message to ${deviceState.device.address}: $message")
         return webSocket?.send(message) ?: false
     }
+
+    /**
+     * Sends a State object to the device.
+     * @param state The State object to send.
+     */
+    fun sendState(state: State) {
+        val json = stateJsonAdapter.toJson(state)
+        sendMessage(json)
+    }
+
 
     fun destroy() {
         webSocket?.close(NORMAL_CLOSURE_STATUS, "Client destroyed")

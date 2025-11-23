@@ -144,7 +144,7 @@ fun DeviceList(
                                 viewModel.toggleDevicePower(device, isOn)
                             },
                             onBrightnessChanged = { brightness ->
-                                viewModel.setDeviceBrightness(device, brightness)
+                                deviceWebsocketListViewModel.setBrightness(device, brightness)
                             },
                             modifier = Modifier.animateItem()
                         )

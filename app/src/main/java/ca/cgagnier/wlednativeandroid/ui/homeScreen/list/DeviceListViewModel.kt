@@ -78,16 +78,6 @@ class DeviceListViewModel @Inject constructor(
         //}
     }
 
-    fun setDeviceBrightness(device: DeviceWithState, brightness: Int) {
-        // TODO: Redo this in websockets
-        //val deviceSetPost = JsonPost(brightness = brightness)
-        //viewModelScope.launch(Dispatchers.IO) {
-        //    stateFactory.getState(device.device).requestsManager.addRequest(
-        //        StateChangeRequest(device, deviceSetPost)
-        //    )
-        //}
-    }
-
     fun deleteDevice(device: Device) {
         viewModelScope.launch(Dispatchers.IO) {
             Log.d(TAG, "Deleting device ${device.originalName} - ${device.address}")

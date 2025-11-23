@@ -3,6 +3,7 @@ package ca.cgagnier.wlednativeandroid.ui.homeScreen.list
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import ca.cgagnier.wlednativeandroid.model.wledapi.State
 import ca.cgagnier.wlednativeandroid.repository.DeviceRepository
 import ca.cgagnier.wlednativeandroid.repository.UserPreferencesRepository
 import ca.cgagnier.wlednativeandroid.service.websocket.DeviceWithState
@@ -124,5 +125,23 @@ class DeviceWebsocketListViewModel @Inject constructor(
         super.onCleared()
         Log.d(TAG, "ViewModel cleared. Closing all WebSocket clients.")
         activeClients.value.values.forEach { it.destroy() }
+    }
+
+    /**
+     * Sets the brightness for a specific device.
+     *
+     * @param device The device to update.
+     * @param brightness The brightness value to set (0-255).
+     */
+    fun setBrightness(device: DeviceWithState, brightness: Int) {
+        viewModelScope.launch {
+            val client = activeClients.value[device.device.macAddress]
+            if (client == null) {
+                Log.w(TAG, "setBrightness: No active client found for MAC address ${device.device.macAddress}")
+                return@launch
+            }
+            Log.d(TAG, "Setting brightness for $device.device.macAddress to $brightness")
+            client.sendState(State(brightness = brightness))
+        }
     }
 }

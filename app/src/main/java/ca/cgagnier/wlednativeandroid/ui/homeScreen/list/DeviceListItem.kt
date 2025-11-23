@@ -274,6 +274,7 @@ fun DeviceInfoTwoRows(
             deviceNetworkStrengthImage(device)
             deviceBatteryPercentageImage(device)
 
+            // TODO: Add websocket connection status indicator
             // TODO: Add support back for update indicator
             //if (device.hasUpdateAvailable()) {
             //    Icon(
