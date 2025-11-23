@@ -25,7 +25,7 @@ private const val TAG = "DeviceWebsocketListViewModel"
 
 @HiltViewModel
 class DeviceWebsocketListViewModel @Inject constructor(
-    deviceRepository: DeviceRepository,
+    private val deviceRepository: DeviceRepository,
     userPreferencesRepository: UserPreferencesRepository
 ) : ViewModel(), DefaultLifecycleObserver {
     private val showHiddenDevices = userPreferencesRepository.showHiddenDevices
@@ -58,7 +58,7 @@ class DeviceWebsocketListViewModel @Inject constructor(
                         if (existingClient == null) {
                             // Device added: create and connect a new client.
                             Log.d(TAG, "[Scan] Device added: $macAddress. Creating client.")
-                            val newClient = WebsocketClient(device)
+                            val newClient = WebsocketClient(device, deviceRepository)
                             if (!isPaused.value) {
                                 newClient.connect()
                             }
@@ -70,7 +70,7 @@ class DeviceWebsocketListViewModel @Inject constructor(
                                 "[Scan] Device address changed for $macAddress. Reconnecting client."
                             )
                             existingClient.destroy()
-                            val newClient = WebsocketClient(device)
+                            val newClient = WebsocketClient(device, deviceRepository)
                             if (!isPaused.value) {
                                 newClient.connect()
                             }
@@ -151,7 +151,7 @@ class DeviceWebsocketListViewModel @Inject constructor(
             started = SharingStarted.WhileSubscribed(5000),
             initialValue = false
         )
-    
+
     override fun onCleared() {
         super.onCleared()
         Log.d(TAG, "ViewModel cleared. Closing all WebSocket clients.")

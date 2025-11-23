@@ -4,6 +4,7 @@ import android.util.Log
 import ca.cgagnier.wlednativeandroid.model.Device
 import ca.cgagnier.wlednativeandroid.model.wledapi.DeviceStateInfo
 import ca.cgagnier.wlednativeandroid.model.wledapi.State
+import ca.cgagnier.wlednativeandroid.repository.DeviceRepository
 import com.squareup.moshi.JsonAdapter
 import com.squareup.moshi.Moshi
 import kotlinx.coroutines.CoroutineScope
@@ -17,11 +18,10 @@ import okhttp3.WebSocket
 import okhttp3.WebSocketListener
 import java.io.IOException
 import java.util.concurrent.TimeUnit
-import kotlin.jvm.java
 import kotlin.math.min
 import kotlin.math.pow
 
-class WebsocketClient(device: Device) {
+class WebsocketClient(device: Device, private val deviceRepository: DeviceRepository) {
 
     val deviceState: DeviceWithState = DeviceWithState(device)
 
@@ -66,9 +66,14 @@ class WebsocketClient(device: Device) {
                 if (deviceStateInfo != null) {
                     deviceState.stateInfo.value = deviceStateInfo
 
-                    // This should probably be done in a ViewModel or a repository
-                    // deviceState.device.originalName = deviceStateInfo.info.name
-                    // db.devices.update(this.device.macAddress, this.state.device);
+                    // Ideally, this should probably not be done in the client directly
+                    coroutineScope.launch {
+                        val newDevice = deviceState.device.copy(
+                            originalName = deviceStateInfo.info.name,
+                            address = deviceState.device.address
+                        )
+                        deviceRepository.update(newDevice)
+                    }
                 } else {
                     Log.w(TAG, "Received a null message after parsing.")
                 }
