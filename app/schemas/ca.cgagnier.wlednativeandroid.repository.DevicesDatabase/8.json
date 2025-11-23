@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 8,
-    "identityHash": "910c977c7b76248bc7a22a2e1d5fcd9f",
+    "identityHash": "d69b1acb3f569498530fbc3e1e73c9ee",
     "entities": [
       {
         "tableName": "Device",
@@ -184,7 +184,7 @@
       },
       {
         "tableName": "device2",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`macAddress` TEXT NOT NULL, `address` TEXT NOT NULL, `isHidden` INTEGER NOT NULL, `originalName` TEXT, `customName` TEXT, PRIMARY KEY(`macAddress`))",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`macAddress` TEXT NOT NULL, `address` TEXT NOT NULL, `isHidden` INTEGER NOT NULL, `originalName` TEXT NOT NULL DEFAULT '', `customName` TEXT NOT NULL DEFAULT '', `skipUpdateTag` TEXT NOT NULL DEFAULT '', `branch` TEXT NOT NULL DEFAULT 'UNKNOWN', `lastSeen` INTEGER NOT NULL DEFAULT UNKNOWN, PRIMARY KEY(`macAddress`))",
         "fields": [
           {
             "fieldPath": "macAddress",
@@ -207,12 +207,37 @@
           {
             "fieldPath": "originalName",
             "columnName": "originalName",
-            "affinity": "TEXT"
+            "affinity": "TEXT",
+            "notNull": true,
+            "defaultValue": "''"
           },
           {
             "fieldPath": "customName",
             "columnName": "customName",
-            "affinity": "TEXT"
+            "affinity": "TEXT",
+            "notNull": true,
+            "defaultValue": "''"
+          },
+          {
+            "fieldPath": "skipUpdateTag",
+            "columnName": "skipUpdateTag",
+            "affinity": "TEXT",
+            "notNull": true,
+            "defaultValue": "''"
+          },
+          {
+            "fieldPath": "branch",
+            "columnName": "branch",
+            "affinity": "TEXT",
+            "notNull": true,
+            "defaultValue": "'UNKNOWN'"
+          },
+          {
+            "fieldPath": "lastSeen",
+            "columnName": "lastSeen",
+            "affinity": "INTEGER",
+            "notNull": true,
+            "defaultValue": "UNKNOWN"
           }
         ],
         "primaryKey": {
@@ -341,7 +366,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '910c977c7b76248bc7a22a2e1d5fcd9f')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'd69b1acb3f569498530fbc3e1e73c9ee')"
     ]
   }
 }

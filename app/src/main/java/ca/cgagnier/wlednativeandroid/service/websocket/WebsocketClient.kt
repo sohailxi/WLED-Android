@@ -70,7 +70,8 @@ class WebsocketClient(device: Device, private val deviceRepository: DeviceReposi
                     coroutineScope.launch {
                         val newDevice = deviceState.device.copy(
                             originalName = deviceStateInfo.info.name,
-                            address = deviceState.device.address
+                            address = deviceState.device.address,
+                            lastSeen = System.currentTimeMillis()
                         )
                         deviceRepository.update(newDevice)
                     }
