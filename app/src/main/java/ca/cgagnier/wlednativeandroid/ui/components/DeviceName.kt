@@ -10,9 +10,7 @@ import ca.cgagnier.wlednativeandroid.service.websocket.DeviceWithState
 @Composable
 @ReadOnlyComposable
 fun deviceName(device: DeviceWithState): String {
-    val name = device.device.customName ?: device.device.originalName
-    if (name != null && name.isNotBlank()) {
-        return name
-    }
-    return stringResource(R.string.default_device_name)
+    return device.device.customName?.trim().takeIf { !it.isNullOrBlank() }
+        ?: device.device.originalName?.trim().takeIf { !it.isNullOrBlank() }
+        ?: stringResource(R.string.default_device_name)
 }
