@@ -150,6 +150,13 @@ class WebsocketClient(device: Device) {
      * @param state The State object to send.
      */
     fun sendState(state: State) {
+        // Trying to update the state when the device is offline should trigger a reconnection.
+        // This is so that a user playing with the UI causes the device to reconnect if it
+        // isn't trying to reconnect automatically for some reason.
+        if (!isConnecting) {
+            Log.w(TAG, "Not connected to ${deviceState.device.address}")
+            connect()
+        }
         val json = stateJsonAdapter.toJson(state)
         sendMessage(json)
     }

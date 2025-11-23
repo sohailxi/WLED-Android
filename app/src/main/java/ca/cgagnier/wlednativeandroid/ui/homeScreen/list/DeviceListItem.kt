@@ -50,7 +50,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import ca.cgagnier.wlednativeandroid.R
-import ca.cgagnier.wlednativeandroid.model.StatefulDevice
 import ca.cgagnier.wlednativeandroid.service.websocket.DeviceWithState
 import ca.cgagnier.wlednativeandroid.ui.components.deviceBatteryPercentageImage
 import ca.cgagnier.wlednativeandroid.ui.components.deviceName
@@ -114,7 +113,6 @@ fun DeviceListItem(
                         )
                     }
                     BrightnessSlider(
-                        isOnline,
                         stateInfo?.state?.brightness ?: 0,
                         onBrightnessChanged
                     )
@@ -126,15 +124,13 @@ fun DeviceListItem(
 
 @Composable
 private fun BrightnessSlider(
-    isOnline: Boolean,
     brightness: Int, // Receive the brightness value directly
     onBrightnessChanged: (brightness: Int) -> Unit
 ) {
     val haptic = LocalHapticFeedback.current
     var sliderPosition by remember(brightness) { mutableFloatStateOf(brightness.toFloat()) }
     SliderWithLabel(
-        value = if (isOnline) sliderPosition else 0f,
-        enabled = isOnline,
+        value = sliderPosition,
         onValueChange = {
             if (it.roundToInt() != sliderPosition.roundToInt()) {
                 haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
