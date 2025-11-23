@@ -151,22 +151,24 @@ fun DeviceEdit(
                         .padding(12.dp)
                         .fillMaxWidth()) {
                         // TODO: Fix updates with new device
-//                        if (device.hasUpdateAvailable()) {
-//                            UpdateAvailable(
-//                                device,
-//                                seeUpdateDetails = {
-//                                    viewModel.showUpdateDetails(device)
-//                                }
-//                            )
-//                        } else {
-//                            NoUpdateAvailable(
-//                                device,
-//                                isCheckingUpdates,
-//                                checkForUpdate = {
-//                                    viewModel.checkForUpdates(device, context)
-//                                }
-//                            )
-//                        }
+                        if (/*device.hasUpdateAvailable()*/false) {
+                            UpdateAvailable(
+                                device,
+                                seeUpdateDetails = {
+                                    // TODO: Fix this update thing
+                                    // viewModel.showUpdateDetails(device)
+                                }
+                            )
+                        } else {
+                            NoUpdateAvailable(
+                                device,
+                                isCheckingUpdates,
+                                checkForUpdate = {
+                                    // TODO: Fix this update thing
+                                    // viewModel.checkForUpdates(device, context)
+                                }
+                            )
+                        }
                     }
                 }
             }
@@ -278,8 +280,7 @@ fun NoUpdateAvailable(device: DeviceWithState, isCheckingUpdates: Boolean, check
         style = MaterialTheme.typography.titleMedium
     )
     Text(
-        // TODO: Fix this device.version thing
-        stringResource(R.string.version_v_num, "" /*device.version*/),
+        stringResource(R.string.version_v_num, device.stateInfo.value?.info?.version ?: "<?>"),
         style = MaterialTheme.typography.bodyMedium
     )
     OutlinedButton(onClick = checkForUpdate) {
@@ -328,7 +329,7 @@ fun UpdateAvailable(device: DeviceWithState, seeUpdateDetails: () -> Unit) {
             )
             // TODO: Fix this device.version thing
             Text(
-                stringResource(R.string.from_version_to_version, "TODO" /*device.version*/, /*device.newUpdateVersionTagAvailable*/),
+                stringResource(R.string.from_version_to_version, device.stateInfo.value?.info?.version ?: "<?>", /*device.newUpdateVersionTagAvailable*/),
                 style = MaterialTheme.typography.bodyMedium
             )
             Button(
