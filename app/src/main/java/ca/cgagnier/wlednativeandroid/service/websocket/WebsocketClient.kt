@@ -46,7 +46,7 @@ class WebsocketClient(device: Device, private val deviceRepository: DeviceReposi
     companion object {
         private const val TAG = "WebsocketClient"
         private const val RECONNECTION_DELAY = 2500L // 2.5 seconds
-        private const val MAX_RECONNECTION_DELAY = 120000L // 120 seconds
+        private const val MAX_RECONNECTION_DELAY = 60000L // 60 seconds
         private const val NORMAL_CLOSURE_STATUS = 1000
     }
 
