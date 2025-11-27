@@ -8,7 +8,6 @@ import ca.cgagnier.wlednativeandroid.model.VersionWithAssets
 import ca.cgagnier.wlednativeandroid.repository.DeviceRepository
 import ca.cgagnier.wlednativeandroid.service.api.DownloadState
 import ca.cgagnier.wlednativeandroid.service.device.StateFactory
-import ca.cgagnier.wlednativeandroid.service.device.api.request.RefreshRequest
 import ca.cgagnier.wlednativeandroid.service.device.api.request.SoftwareUpdateRequest
 import ca.cgagnier.wlednativeandroid.service.update.DeviceUpdateService
 import ca.cgagnier.wlednativeandroid.service.websocket.DeviceWithState
@@ -209,7 +208,6 @@ class UpdateInstallingViewModel @Inject constructor(
         )
         // TODO: Fix this with new devices
         //deviceRepository.update(updatedDevice)
-        stateFactory.getState(device).requestsManager.addRequest(RefreshRequest(device))
     }
 
     private fun getHtmlErrorMessage(response: Response<ResponseBody>): String {

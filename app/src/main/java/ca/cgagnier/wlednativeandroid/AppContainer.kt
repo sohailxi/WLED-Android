@@ -5,7 +5,6 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.dataStore
 import ca.cgagnier.wlednativeandroid.repository.AssetDao
 import ca.cgagnier.wlednativeandroid.repository.DeviceDao
-import ca.cgagnier.wlednativeandroid.repository.DeviceRepository
 import ca.cgagnier.wlednativeandroid.repository.DevicesDatabase
 import ca.cgagnier.wlednativeandroid.repository.StatefulDeviceDao
 import ca.cgagnier.wlednativeandroid.repository.StatefulDeviceRepository
@@ -18,7 +17,6 @@ import ca.cgagnier.wlednativeandroid.repository.migrations.UserPreferencesV0ToV1
 import ca.cgagnier.wlednativeandroid.service.NetworkConnectivityManager
 import ca.cgagnier.wlednativeandroid.service.device.StateFactory
 import ca.cgagnier.wlednativeandroid.service.device.api.JsonApiRequestHandler
-import ca.cgagnier.wlednativeandroid.service.update.ReleaseService
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -88,11 +86,8 @@ object AppContainer {
 
     @Provides
     @Singleton
-    fun provideStateFactory(
-        deviceRepository: StatefulDeviceRepository, versionWithAssetsRepository: VersionWithAssetsRepository
-    ): StateFactory {
-        val releaseService = ReleaseService(versionWithAssetsRepository)
-        return StateFactory(JsonApiRequestHandler(deviceRepository, releaseService))
+    fun provideStateFactory(): StateFactory {
+        return StateFactory(JsonApiRequestHandler())
     }
 
     @Provides
