@@ -87,10 +87,21 @@ class ReleaseService(private val versionWithAssetsRepository: VersionWithAssetsR
             return null
         }
 
+        // Make sure we have a version that isn't prefixed with "v" to be able to properly compare
+        // it to Device's version.
+        val untaggedUpdateVersion = if (latestVersion.version.tagName.startsWith(
+                'v', ignoreCase = true
+            )
+        ) latestVersion.version.tagName.drop(1) else latestVersion.version.tagName
+
+        // Don't offer to update to the already installed version
+        if (untaggedUpdateVersion == deviceInfo.version) {
+            return null
+        }
+
         val betaSuffixes = listOf("-a", "-b", "-rc")
         Log.w(
-            TAG,
-            "Device ${deviceInfo.ipAddress}: ${deviceInfo.version} to ${latestVersion.version.tagName}"
+            TAG, "Device ${deviceInfo.ipAddress}: ${deviceInfo.version} to ${untaggedUpdateVersion}"
         )
         if (branch == Branch.STABLE && betaSuffixes.any {
                 deviceInfo.version.contains(
@@ -111,9 +122,9 @@ class ReleaseService(private val versionWithAssetsRepository: VersionWithAssetsR
         }
 
         try {
-            return if (Semver(
-                    latestVersion.version.tagName.drop(1), Semver.SemverType.LOOSE
-                ).isGreaterThan(deviceInfo.version)
+            return if (Semver(untaggedUpdateVersion, Semver.SemverType.LOOSE).isGreaterThan(
+                    deviceInfo.version
+                )
             ) {
                 latestVersion.version.tagName
             } else {
