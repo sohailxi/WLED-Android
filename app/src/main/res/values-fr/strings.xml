@@ -80,4 +80,7 @@
     <string name="help">WLED Aide</string>
     <string name="support_me">Supporter Moustachauve</string>
     <string name="offline_devices">Appareils hors-ligne</string>
+    <string name="websocket_connected">Connecté</string>
+    <string name="websocket_connecting">Connexion...</string>
+    <string name="websocket_disconnected">Déconnecté</string>
 </resources>

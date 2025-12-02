@@ -1,12 +1,14 @@
 package ca.cgagnier.wlednativeandroid.ui.components
 
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Icon
 import androidx.compose.material3.PlainTooltip
 import androidx.compose.material3.Text
+import androidx.compose.material3.TooltipAnchorPosition
 import androidx.compose.material3.TooltipBox
-import androidx.compose.material3.TooltipDefaults
+import androidx.compose.material3.TooltipDefaults.rememberTooltipPositionProvider
 import androidx.compose.material3.rememberTooltipState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -44,7 +46,7 @@ fun deviceNetworkStrengthImage(device: DeviceWithState) {
     val stateInfo by device.stateInfo
     val rssi = stateInfo?.info?.wifi?.rssi ?: -101
     TooltipBox(
-        positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider(),
+        positionProvider = rememberTooltipPositionProvider(TooltipAnchorPosition.Above),
         tooltip = {
             PlainTooltip {
                 if (device.isOnline) {
@@ -71,7 +73,8 @@ fun deviceNetworkStrengthImage(device: DeviceWithState) {
             contentDescription = stringResource(R.string.network_status),
             modifier = Modifier
                 .padding(start = 4.dp)
-                .height(20.dp)
+                .height(16.dp)
+                .offset(y = (-2).dp)
         )
     }
 }
