@@ -1,12 +1,26 @@
 package ca.cgagnier.wlednativeandroid.service.update
 
+import android.util.Log
 import ca.cgagnier.wlednativeandroid.model.Asset
+import ca.cgagnier.wlednativeandroid.model.Device
 import ca.cgagnier.wlednativeandroid.model.VersionWithAssets
+import ca.cgagnier.wlednativeandroid.service.api.DeviceApi
 import ca.cgagnier.wlednativeandroid.service.api.DownloadState
 import ca.cgagnier.wlednativeandroid.service.api.github.GithubApi
 import ca.cgagnier.wlednativeandroid.service.websocket.DeviceWithState
 import kotlinx.coroutines.flow.Flow
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.MultipartBody
+import okhttp3.OkHttpClient
+import okhttp3.RequestBody.Companion.asRequestBody
+import okhttp3.ResponseBody
+import retrofit2.Response
+import retrofit2.Retrofit
+import retrofit2.converter.moshi.MoshiConverterFactory
 import java.io.File
+import java.util.concurrent.TimeUnit
+
+private const val TAG = "DeviceUpdateService"
 
 class DeviceUpdateService(
     val device: DeviceWithState,
@@ -14,10 +28,7 @@ class DeviceUpdateService(
     private val cacheDir: File
 ) {
     private val supportedPlatforms = listOf(
-        "esp01",
-        "esp02",
-        "esp32",
-        "esp8266"
+        "esp01", "esp02", "esp32", "esp8266"
     )
 
     private var assetName: String = ""
@@ -75,6 +86,20 @@ class DeviceUpdateService(
     }
 
     /**
+     * Get the JSON API for a device.
+     * @param device The device to get the JSON API for.
+     * @return The JSON DeviceApi for the device.
+     */
+    private fun getJsonApi(device: Device): DeviceApi {
+        val timeout = 120L
+        val okHttpClient = OkHttpClient().newBuilder().connectTimeout(timeout, TimeUnit.SECONDS)
+            .readTimeout(timeout, TimeUnit.SECONDS).writeTimeout(timeout, TimeUnit.SECONDS).build()
+        return Retrofit.Builder().baseUrl(device.getDeviceUrl()).client(okHttpClient)
+            .addConverterFactory(MoshiConverterFactory.create()).build()
+            .create(DeviceApi::class.java)
+    }
+
+    /**
      * Get the name of the asset to download.
      */
     fun getAssetName(): String {
@@ -102,5 +127,23 @@ class DeviceUpdateService(
         val cacheDirectory = File(cacheDir, versionWithAssets.version.tagName)
         cacheDirectory.mkdirs()
         return File(cacheDirectory, asset.name)
+    }
+
+    suspend fun sendSoftwareUpdateRequest(
+        device: Device,
+        binaryFile: File,
+        callback: ((Response<ResponseBody>) -> Unit)? = null,
+        errorCallback: ((Exception) -> Unit)? = null
+    ) {
+        Log.d(TAG, "Installing software update: ${device.macAddress}")
+        try {
+            val reqFile = binaryFile.asRequestBody("application/octet-stream".toMediaTypeOrNull())
+            val response = getJsonApi(device).updateDevice(
+                MultipartBody.Part.createFormData("file", "binary", reqFile)
+            )
+            callback?.invoke(response)
+        } catch (e: Exception) {
+            errorCallback?.invoke(e)
+        }
     }
 }

@@ -15,8 +15,6 @@ import ca.cgagnier.wlednativeandroid.repository.VersionDao
 import ca.cgagnier.wlednativeandroid.repository.VersionWithAssetsRepository
 import ca.cgagnier.wlednativeandroid.repository.migrations.UserPreferencesV0ToV1
 import ca.cgagnier.wlednativeandroid.service.NetworkConnectivityManager
-import ca.cgagnier.wlednativeandroid.service.device.StateFactory
-import ca.cgagnier.wlednativeandroid.service.device.api.JsonApiRequestHandler
 import ca.cgagnier.wlednativeandroid.service.update.ReleaseService
 import dagger.Module
 import dagger.Provides
@@ -88,12 +86,6 @@ object AppContainer {
     @Singleton
     fun providesReleaseService(versionWithAssetsRepository: VersionWithAssetsRepository): ReleaseService {
         return ReleaseService(versionWithAssetsRepository)
-    }
-
-    @Provides
-    @Singleton
-    fun provideStateFactory(): StateFactory {
-        return StateFactory(JsonApiRequestHandler())
     }
 
     @Provides
