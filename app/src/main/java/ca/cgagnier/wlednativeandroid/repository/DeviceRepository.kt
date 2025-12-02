@@ -14,11 +14,6 @@ class DeviceRepository @Inject constructor(private val deviceDao: DeviceDao) {
     }
 
     @WorkerThread
-    fun findLiveDeviceByAddress(address: String): Flow<Device?> {
-        return deviceDao.findLiveDeviceByAddress(address)
-    }
-
-    @WorkerThread
     suspend fun findDeviceByMacAddress(address: String): Device? {
         return deviceDao.findDeviceByMacAddress(address)
     }
@@ -40,9 +35,5 @@ class DeviceRepository @Inject constructor(private val deviceDao: DeviceDao) {
 
     fun contains(device: Device): Boolean {
         return deviceDao.count(device.address) > 0
-    }
-
-    suspend fun hasHiddenDevices(): Boolean {
-        return deviceDao.countHiddenDevices() > 0
     }
 }

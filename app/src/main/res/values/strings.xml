@@ -83,6 +83,6 @@
     <string name="support_me">Support Moustachauve</string>
     <string name="offline_devices">Offline Devices</string>
     <string name="websocket_connected">Connected</string>
-    <string name="websocket_connecting">Connecting...</string>
+    <string name="websocket_connecting">Connecting…</string>
     <string name="websocket_disconnected">Disconnected</string>
 </resources>

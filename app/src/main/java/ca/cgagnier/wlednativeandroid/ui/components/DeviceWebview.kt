@@ -54,6 +54,7 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.core.net.toUri
 import androidx.lifecycle.viewmodel.compose.viewModel
 import ca.cgagnier.wlednativeandroid.FileUploadContract
 import ca.cgagnier.wlednativeandroid.R
@@ -426,7 +427,7 @@ fun downloadListener(
     context: Context
 ) {
     val request = DownloadManager.Request(
-        Uri.parse(url)
+        url.toUri()
     )
     request.setNotificationVisibility(
         DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED
