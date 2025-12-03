@@ -1,6 +1,5 @@
 package ca.cgagnier.wlednativeandroid.ui.homeScreen.deviceEdit
 
-import android.content.Context
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -9,6 +8,7 @@ import ca.cgagnier.wlednativeandroid.model.Device
 import ca.cgagnier.wlednativeandroid.model.VersionWithAssets
 import ca.cgagnier.wlednativeandroid.repository.DeviceRepository
 import ca.cgagnier.wlednativeandroid.repository.VersionWithAssetsRepository
+import ca.cgagnier.wlednativeandroid.service.api.github.GithubApi
 import ca.cgagnier.wlednativeandroid.service.update.ReleaseService
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
@@ -23,6 +23,7 @@ const val TAG = "DeviceEditViewModel"
 class DeviceEditViewModel @Inject constructor(
     private val repository: DeviceRepository,
     private val versionWithAssetsRepository: VersionWithAssetsRepository,
+    private val githubApi: GithubApi
 ) : ViewModel() {
 
     private var _updateDetailsVersion: MutableStateFlow<VersionWithAssets?> = MutableStateFlow(null)
@@ -101,14 +102,14 @@ class DeviceEditViewModel @Inject constructor(
         _updateInstallVersion.value = null
     }
 
-    fun checkForUpdates(device: Device, context: Context) =
+    fun checkForUpdates(device: Device) =
         viewModelScope.launch(Dispatchers.IO) {
             _isCheckingUpdates.value = true
             val updatedDevice = device.copy(skipUpdateTag = "")
             repository.update(updatedDevice)
             try {
                 val releaseService = ReleaseService(versionWithAssetsRepository)
-                releaseService.refreshVersions(context.cacheDir)
+                releaseService.refreshVersions(githubApi)
             } finally {
                 _isCheckingUpdates.value = false
             }

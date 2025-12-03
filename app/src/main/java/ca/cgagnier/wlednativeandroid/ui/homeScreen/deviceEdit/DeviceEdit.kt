@@ -42,7 +42,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
@@ -72,7 +71,6 @@ fun DeviceEdit(
         Pair(Branch.STABLE, stringResource(R.string.stable)),
         Pair(Branch.BETA, stringResource(R.string.beta)),
     )
-    val context = LocalContext.current
 
     val updateTag by device.updateVersionTagFlow.collectAsState(initial = null)
 
@@ -177,7 +175,7 @@ fun DeviceEdit(
                                 device,
                                 isCheckingUpdates,
                                 checkForUpdate = {
-                                    viewModel.checkForUpdates(device.device, context)
+                                    viewModel.checkForUpdates(device.device)
                                 }
                             )
                         }

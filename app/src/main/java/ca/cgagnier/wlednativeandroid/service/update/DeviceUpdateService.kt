@@ -22,7 +22,8 @@ class DeviceUpdateService(
     val device: DeviceWithState,
     private val versionWithAssets: VersionWithAssets,
     private val cacheDir: File,
-    private val deviceApiFactory: DeviceApiFactory
+    private val deviceApiFactory: DeviceApiFactory,
+    private val githubApi: GithubApi,
 ) {
     private val supportedPlatforms = listOf(
         "esp01", "esp02", "esp32", "esp8266"
@@ -101,8 +102,6 @@ class DeviceUpdateService(
         if (!::asset.isInitialized) {
             throw Exception("Asset could not be determined for ${device.device.macAddress}.")
         }
-
-        val githubApi = GithubApi(cacheDir)
         return githubApi.downloadReleaseBinary(asset, getPathForAsset())
     }
 

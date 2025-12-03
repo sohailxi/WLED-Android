@@ -7,6 +7,7 @@ import ca.cgagnier.wlednativeandroid.model.VersionWithAssets
 import ca.cgagnier.wlednativeandroid.repository.DeviceRepository
 import ca.cgagnier.wlednativeandroid.service.api.DeviceApiFactory
 import ca.cgagnier.wlednativeandroid.service.api.DownloadState
+import ca.cgagnier.wlednativeandroid.service.api.github.GithubApi
 import ca.cgagnier.wlednativeandroid.service.update.DeviceUpdateService
 import ca.cgagnier.wlednativeandroid.service.websocket.DeviceWithState
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -28,6 +29,7 @@ private const val TAG = "UpdateInstallingViewModel"
 class UpdateInstallingViewModel @Inject constructor(
     private val deviceRepository: DeviceRepository,
     private val deviceApiFactory: DeviceApiFactory,
+    private val githubApi: GithubApi
 ) : ViewModel() {
     private var updateStarted = false
 
@@ -81,7 +83,8 @@ class UpdateInstallingViewModel @Inject constructor(
             )
         }
 
-        val updateService = DeviceUpdateService(device, version, cacheDir, deviceApiFactory)
+        val updateService =
+            DeviceUpdateService(device, version, cacheDir, deviceApiFactory, githubApi)
         if (!updateService.couldDetermineAsset()) {
             _state.update { previousState ->
                 previousState.copy(
