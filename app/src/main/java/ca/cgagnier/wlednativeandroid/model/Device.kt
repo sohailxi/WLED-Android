@@ -34,7 +34,7 @@ data class Device(
     @ColumnInfo(defaultValue = "UNKNOWN")
     val branch: Branch = Branch.UNKNOWN,
 
-    @ColumnInfo(defaultValue = "UNKNOWN")
+    @ColumnInfo(defaultValue = "0")
     val lastSeen: Long = System.currentTimeMillis(),
 ) : Parcelable {
 

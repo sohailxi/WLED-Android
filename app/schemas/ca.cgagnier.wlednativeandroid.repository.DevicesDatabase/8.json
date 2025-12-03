@@ -184,7 +184,7 @@
       },
       {
         "tableName": "Device2",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`macAddress` TEXT NOT NULL, `address` TEXT NOT NULL, `isHidden` INTEGER NOT NULL, `originalName` TEXT NOT NULL DEFAULT '', `customName` TEXT NOT NULL DEFAULT '', `skipUpdateTag` TEXT NOT NULL DEFAULT '', `branch` TEXT NOT NULL DEFAULT 'UNKNOWN', `lastSeen` INTEGER NOT NULL DEFAULT UNKNOWN, PRIMARY KEY(`macAddress`))",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`macAddress` TEXT NOT NULL, `address` TEXT NOT NULL, `isHidden` INTEGER NOT NULL, `originalName` TEXT NOT NULL DEFAULT '', `customName` TEXT NOT NULL DEFAULT '', `skipUpdateTag` TEXT NOT NULL DEFAULT '', `branch` TEXT NOT NULL DEFAULT 'UNKNOWN', `lastSeen` INTEGER NOT NULL DEFAULT 0, PRIMARY KEY(`macAddress`))",
         "fields": [
           {
             "fieldPath": "macAddress",
@@ -237,7 +237,7 @@
             "columnName": "lastSeen",
             "affinity": "INTEGER",
             "notNull": true,
-            "defaultValue": "UNKNOWN"
+            "defaultValue": "0"
           }
         ],
         "primaryKey": {
