@@ -30,6 +30,7 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -52,6 +53,11 @@ import kotlinx.coroutines.launch
 
 private const val TAG = "screen_DeviceList"
 
+/**
+ * Amount of time after a device becomes offline before it is considered offline.
+ */
+private const val DEVICE_OFFLINE_TIMEOUT_MS = 60000L
+
 @Composable
 fun DeviceList(
     selectedDevice: DeviceWithState?,
@@ -67,6 +73,15 @@ fun DeviceList(
     val allDevices by viewModel.allDevicesWithState.collectAsStateWithLifecycle()
     val showOfflineDevicesLast by viewModel.showOfflineDevicesLast.collectAsStateWithLifecycle()
 
+    // Keep track of the time to update the list of online/offline devices based on lastSeen
+    var currentTime by remember { mutableLongStateOf(System.currentTimeMillis()) }
+    LaunchedEffect(Unit) {
+        while (true) {
+            delay(5000)
+            currentTime = System.currentTimeMillis()
+        }
+    }
+
     val visibleDevices by remember(allDevices) {
         derivedStateOf {
             allDevices.filter { !it.device.isHidden || viewModel.showHiddenDevices.value }
@@ -78,12 +93,12 @@ fun DeviceList(
 
     val onlineDevices by remember(visibleDevices) {
         derivedStateOf {
-            visibleDevices.filter { it.isOnline }
+            visibleDevices.filter { !shouldShowAsOffline(it, currentTime) }
         }
     }
     val offlineDevices by remember(visibleDevices) {
         derivedStateOf {
-            visibleDevices.filter { !it.isOnline }
+            visibleDevices.filter { shouldShowAsOffline(it, currentTime) }
         }
     }
 
@@ -360,4 +375,14 @@ fun ConfirmDeleteDialog(
             }
         })
     }
+}
+
+/**
+ * Returns true if the device is offline and should be shown as such.
+ *
+ * This is to avoid devices jumping between online and offline constantly if the connection is
+ * unstable.
+ */
+private fun shouldShowAsOffline(device: DeviceWithState, currentTime: Long): Boolean {
+    return !device.isOnline && currentTime - device.device.lastSeen >= DEVICE_OFFLINE_TIMEOUT_MS
 }
