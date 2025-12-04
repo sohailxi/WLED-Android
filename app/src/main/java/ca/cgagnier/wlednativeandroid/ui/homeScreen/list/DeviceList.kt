@@ -1,14 +1,17 @@
 package ca.cgagnier.wlednativeandroid.ui.homeScreen.list
 
+import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyItemScope
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Menu
@@ -28,6 +31,7 @@ import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableLongStateOf
@@ -78,6 +82,8 @@ fun DeviceList(
 ) {
     val allDevices by viewModel.allDevicesWithState.collectAsStateWithLifecycle()
     val showOfflineDevicesLast by viewModel.showOfflineDevicesLast.collectAsStateWithLifecycle()
+
+    val listState = rememberLazyListState()
 
     var inGracePeriod by remember { mutableStateOf(true) }
     var isInitialLoading by remember { mutableStateOf(true) }
@@ -166,16 +172,22 @@ fun DeviceList(
             onRefresh = refresh,
         ) {
             LazyColumn(
+                state = listState,
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(horizontal = 6.dp)
                     .clip(shape = MaterialTheme.shapes.large),
             ) {
+                // First invisible item to keep the scroll at the top if the list changes under it.
+                // This is a "hack" suggested here: https://issuetracker.google.com/issues/234223556#comment2
+                item(key = "first_invisible") {
+                    Spacer(Modifier.padding(1.dp).height(0.dp))
+                }
                 if (allDevices.isEmpty()) {
                     // Don't show the empty page during the initial load to improve the user
                     // experience.
                     if (!isInitialLoading) {
-                        item {
+                        item(key = "no_devices") {
                             NoDevicesItem(
                                 modifier = Modifier.fillParentMaxSize(),
                                 shouldShowHiddenDevices = visibleDevices.isEmpty() && allDevices.isNotEmpty(),
@@ -186,7 +198,7 @@ fun DeviceList(
                     }
                 } else {
                     if (isWLEDCaptivePortal) {
-                        item {
+                        item(key = "captive_portal") {
                             val device = getApModeDeviceWithState()
                             DeviceAPListItem(
                                 isSelected = device.device.macAddress == selectedDevice?.device?.macAddress,
@@ -216,9 +228,20 @@ fun DeviceList(
 
                     // This spacer is so that the last item of the list can be scrolled a bit
                     // further than just the bottom of the screen.
-                    item {
+                    item(key = "end_spacer_buffer") {
                         Spacer(Modifier.padding(42.dp))
                     }
+                }
+            }
+
+            // This should help prevent weird scrolling when devices switches between online and
+            // offline state. This keeps the scroll position exactly as it is currently.
+            SideEffect {
+                if (!listState.isScrollInProgress) {
+                    listState.requestScrollToItem(
+                        index = listState.firstVisibleItemIndex,
+                        scrollOffset = listState.firstVisibleItemScrollOffset
+                    )
                 }
             }
         }
@@ -265,7 +288,7 @@ fun LazyListScope.onlineOfflineDevicesList(
         )
     }
     if (offlineDevices.isNotEmpty()) {
-        item {
+        item(key = "offline_label") {
             Text(stringResource(R.string.offline_devices))
         }
         itemsIndexed(
