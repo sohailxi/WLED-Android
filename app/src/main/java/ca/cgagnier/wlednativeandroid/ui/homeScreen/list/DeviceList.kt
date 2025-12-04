@@ -45,6 +45,7 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import ca.cgagnier.wlednativeandroid.R
 import ca.cgagnier.wlednativeandroid.service.websocket.DeviceWithState
+import ca.cgagnier.wlednativeandroid.service.websocket.WebsocketStatus
 import ca.cgagnier.wlednativeandroid.service.websocket.getApModeDeviceWithState
 import ca.cgagnier.wlednativeandroid.ui.components.DeviceInfoTwoRows
 import ca.cgagnier.wlednativeandroid.ui.theme.DeviceTheme
@@ -57,6 +58,11 @@ private const val TAG = "screen_DeviceList"
  * Amount of time after a device becomes offline before it is considered offline.
  */
 private const val DEVICE_OFFLINE_TIMEOUT_MS = 60000L
+
+/**
+ * Grace period where devices are "optimistically" kept online if they are connecting
+ */
+private const val INITIAL_GRACE_PERIOD_MS = 5000L
 
 @Composable
 fun DeviceList(
@@ -73,9 +79,25 @@ fun DeviceList(
     val allDevices by viewModel.allDevicesWithState.collectAsStateWithLifecycle()
     val showOfflineDevicesLast by viewModel.showOfflineDevicesLast.collectAsStateWithLifecycle()
 
+    var inGracePeriod by remember { mutableStateOf(true) }
+    var isInitialLoading by remember { mutableStateOf(true) }
+
     // Keep track of the time to update the list of online/offline devices based on lastSeen
     var currentTime by remember { mutableLongStateOf(System.currentTimeMillis()) }
     LaunchedEffect(Unit) {
+        launch {
+            // "No Devices" Flash prevention: Wait 500ms before allowing the "No Devices" item to show.
+            // If the DB loads faster than this, the user sees the list immediately.
+            // If the DB is empty, the user sees a white screen for 0.5s, then the message.
+            delay(500)
+            isInitialLoading = false
+        }
+        launch {
+            // Optimistic UI: Force all devices to look "Online" for the first few seconds
+            // to allow WebSockets to connect without items jumping around.
+            delay(INITIAL_GRACE_PERIOD_MS)
+            inGracePeriod = false
+        }
         while (true) {
             delay(5000)
             currentTime = System.currentTimeMillis()
@@ -91,14 +113,18 @@ fun DeviceList(
         }
     }
 
-    val onlineDevices by remember(visibleDevices) {
+    val onlineDevices by remember(visibleDevices, currentTime, inGracePeriod) {
         derivedStateOf {
-            visibleDevices.filter { !shouldShowAsOffline(it, currentTime) }
+            visibleDevices.filter { device ->
+                !shouldShowAsOffline(device, currentTime, inGracePeriod)
+            }
         }
     }
-    val offlineDevices by remember(visibleDevices) {
+    val offlineDevices by remember(visibleDevices, currentTime, inGracePeriod) {
         derivedStateOf {
-            visibleDevices.filter { shouldShowAsOffline(it, currentTime) }
+            visibleDevices.filter { device ->
+                shouldShowAsOffline(device, currentTime, inGracePeriod)
+            }
         }
     }
 
@@ -146,15 +172,17 @@ fun DeviceList(
                     .clip(shape = MaterialTheme.shapes.large),
             ) {
                 if (allDevices.isEmpty()) {
-                    // TODO: Find a way to improve the first load experience when opening the app.
-                    //  Seeing "no device" flash for a second when first opening the app isn't great
-                    item {
-                        NoDevicesItem(
-                            modifier = Modifier.fillParentMaxSize(),
-                            shouldShowHiddenDevices = visibleDevices.isEmpty() && allDevices.isNotEmpty(),
-                            onAddDevice = onAddDevice,
-                            onShowHiddenDevices = onShowHiddenDevices
-                        )
+                    // Don't show the empty page during the initial load to improve the user
+                    // experience.
+                    if (!isInitialLoading) {
+                        item {
+                            NoDevicesItem(
+                                modifier = Modifier.fillParentMaxSize(),
+                                shouldShowHiddenDevices = visibleDevices.isEmpty() && allDevices.isNotEmpty(),
+                                onAddDevice = onAddDevice,
+                                onShowHiddenDevices = onShowHiddenDevices
+                            )
+                        }
                     }
                 } else {
                     if (isWLEDCaptivePortal) {
@@ -383,6 +411,13 @@ fun ConfirmDeleteDialog(
  * This is to avoid devices jumping between online and offline constantly if the connection is
  * unstable.
  */
-private fun shouldShowAsOffline(device: DeviceWithState, currentTime: Long): Boolean {
-    return !device.isOnline && currentTime - device.device.lastSeen >= DEVICE_OFFLINE_TIMEOUT_MS
+private fun shouldShowAsOffline(
+    device: DeviceWithState, currentTime: Long, inGracePeriod: Boolean
+): Boolean {
+    // During grace period, only show as offline if explicitly Disconnected. This "optimistically"
+    // marks connecting devices as online.
+    val isOffline =
+        if (inGracePeriod) device.websocketStatus.value == WebsocketStatus.DISCONNECTED else !device.isOnline
+
+    return isOffline && currentTime - device.device.lastSeen >= DEVICE_OFFLINE_TIMEOUT_MS
 }
