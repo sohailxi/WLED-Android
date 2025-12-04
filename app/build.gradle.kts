@@ -72,6 +72,7 @@ ksp {
 dependencies {
     implementation(libs.androidx.graphics.shapes)
     implementation(libs.androidx.compose.ui.graphics)
+    implementation(libs.androidx.compose.ui.geometry)
     val composeBom = platform(libs.androidx.compose.bom)
     androidTestImplementation(composeBom)
     androidTestImplementation(libs.androidx.espresso.core)

@@ -187,7 +187,11 @@ fun DeviceList(
                 if (allDevices.isEmpty()) {
                     // Don't show the empty page during the initial load to improve the user
                     // experience.
-                    if (!isInitialLoading) {
+                    if (isInitialLoading) {
+                        items(3) {
+                            SkeletonDeviceRow()
+                        }
+                    } else {
                         item(key = "no_devices") {
                             NoDevicesItem(
                                 modifier = Modifier.fillParentMaxSize(),
