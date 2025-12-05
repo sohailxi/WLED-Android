@@ -47,11 +47,11 @@ import androidx.compose.ui.composed
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import ca.cgagnier.wlednativeandroid.R
@@ -327,9 +327,9 @@ fun Modifier.shimmerEffect(): Modifier = composed {
     )
 
     val shimmerColors = listOf(
-        Color.LightGray.copy(alpha = 0.6f),
-        Color.LightGray.copy(alpha = 0.2f),
-        Color.LightGray.copy(alpha = 0.6f),
+        MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.6f),
+        MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.2f),
+        MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.6f),
     )
 
     background(
@@ -352,5 +352,14 @@ fun Modifier.shimmerEffect(): Modifier = composed {
         }
     ).onGloballyPositioned {
         size = it.size
+    }
+}
+
+
+@Preview(showBackground = true)
+@Composable
+fun SkeletonDeviceRowPreview() {
+    MaterialTheme {
+        SkeletonDeviceRow()
     }
 }
