@@ -113,4 +113,6 @@
     <string name="open">Open</string>
     <string name="dismiss">Dismiss</string>
     <string name="some_devices_hidden">Some of your devices are hidden</string>
+    <string name="appwidget_text">Presets</string>
+    <string name="no_presets_found">No presets found</string>
 </resources>
