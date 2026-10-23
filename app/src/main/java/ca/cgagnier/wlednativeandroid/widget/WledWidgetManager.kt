@@ -102,12 +102,32 @@ class WledWidgetManager @Inject constructor(
         jsonPost: JsonPost = JsonPost(verbose = true),
     ) {
         val device = deviceRepository.findDeviceByMacAddress(widgetData.macAddress)
-        val targetAddress = device?.address ?: widgetData.address
+        var targetAddress = device?.address ?: widgetData.address
 
-        val api = deviceApiFactory.create(targetAddress)
-        val response = api.postJson(jsonPost)
+        var api = deviceApiFactory.create(targetAddress)
+        var response = try {
+            api.postJson(jsonPost)
+        } catch (@Suppress("TooGenericExceptionCaught") e: Exception) {
+            Log.e(TAG, "First attempt to update widget failed", e)
+            null
+        }
 
-        if (response.isSuccessful) {
+        if (response == null || !response.isSuccessful) {
+            Log.w(TAG, "Retrying update for widget ${widgetData.macAddress}")
+            val refreshedDevice = deviceRepository.findDeviceByMacAddress(widgetData.macAddress)
+            if (refreshedDevice != null) {
+                targetAddress = refreshedDevice.address
+                api = deviceApiFactory.create(targetAddress)
+            }
+            response = try {
+                api.postJson(jsonPost)
+            } catch (@Suppress("TooGenericExceptionCaught") e: Exception) {
+                Log.e(TAG, "Second attempt to update widget failed", e)
+                null
+            }
+        }
+
+        if (response != null && response.isSuccessful) {
             response.body()?.let { body ->
                 val newData = widgetData.copy(
                     address = targetAddress,

@@ -42,4 +42,13 @@ data class Device(
 ) : Parcelable {
 
     fun getDeviceUrl(): String = "http://$address"
+
+    val name: String
+        get() = if (customName.isNotEmpty()) {
+            customName
+        } else if (originalName.isNotEmpty()) {
+            originalName
+        } else {
+            address
+        }
 }

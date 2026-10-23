@@ -2,6 +2,7 @@ package ca.cgagnier.wlednativeandroid.widget
 
 import android.content.Context
 import android.content.Intent
+import android.net.Uri
 import android.util.Log
 import android.widget.RemoteViews
 import android.widget.RemoteViewsService
@@ -14,8 +15,6 @@ import dagger.hilt.EntryPoint
 import dagger.hilt.InstallIn
 import dagger.hilt.android.EntryPointAccessors
 import dagger.hilt.components.SingletonComponent
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
 import kotlinx.coroutines.runBlocking
 
 class PresetWidgetService : RemoteViewsService() {
@@ -38,12 +37,14 @@ class PresetWidgetRemoteViewsFactory(private val context: Context, intent: Inten
     )
     private var presets: List<Pair<String, Preset>> = emptyList()
     private var deviceAddress: String? = null
+    private var deviceMac: String? = null
 
     @EntryPoint
     @InstallIn(SingletonComponent::class)
     interface PresetWidgetServiceEntryPoint {
         fun deviceApiFactory(): DeviceApiFactory
         fun moshi(): Moshi
+        fun deviceRepository(): ca.cgagnier.wlednativeandroid.repository.DeviceRepository
     }
 
     override fun onCreate() {
@@ -56,6 +57,7 @@ class PresetWidgetRemoteViewsFactory(private val context: Context, intent: Inten
     override fun onDataSetChanged() {
         Log.d(TAG, "onDataSetChanged called for widget $appWidgetId")
         deviceAddress = PresetWidgetConfigureActivity.loadDeviceAddress(context, appWidgetId)
+        deviceMac = PresetWidgetConfigureActivity.loadDeviceMacAddress(context, appWidgetId)
         if (deviceAddress == null) {
             Log.e(TAG, "Device address is null for widget $appWidgetId")
             return
@@ -67,6 +69,7 @@ class PresetWidgetRemoteViewsFactory(private val context: Context, intent: Inten
         )
         val deviceApiFactory = entryPoint.deviceApiFactory()
         val moshi = entryPoint.moshi()
+        val deviceRepository = entryPoint.deviceRepository()
 
         // Always load from cache first to ensure immediate display of existing data
         loadPresetsFromCache(moshi)
@@ -87,6 +90,17 @@ class PresetWidgetRemoteViewsFactory(private val context: Context, intent: Inten
         lastFetchTimeMap[appWidgetId] = currentTime
 
         runBlocking {
+            if (!deviceMac.isNullOrEmpty()) {
+                val device = deviceRepository.findDeviceByMacAddress(deviceMac!!)
+                if (device != null) {
+                    if (device.address != deviceAddress) {
+                        Log.d(TAG, "Device address changed from $deviceAddress to ${device.address}")
+                        deviceAddress = device.address
+                        PresetWidgetConfigureActivity.saveDevicePref(context, appWidgetId, device)
+                    }
+                }
+            }
+
             val address = deviceAddress ?: PresetWidgetConfigureActivity.loadDeviceAddress(context, appWidgetId)
             if (address == null) {
                 Log.e(TAG, "Device address is null in runBlocking (widget $appWidgetId)")
@@ -98,50 +112,43 @@ class PresetWidgetRemoteViewsFactory(private val context: Context, intent: Inten
                 Log.d(TAG, "Fetching presets for $deviceAddress (widget $appWidgetId)")
                 val api = deviceApiFactory.create(deviceAddress!!, 4L)
 
-                val stateDeferred = async(Dispatchers.IO) { api.getState() }
-                val presetsDeferred = async(Dispatchers.IO) { api.getPresets() }
-
-                val stateResponse = try {
-                    stateDeferred.await()
-                } catch (e: Exception) {
-                    Log.e(TAG, "Error fetching state concurrently (widget $appWidgetId)", e)
-                    null
-                }
-
-                if (stateResponse != null && stateResponse.isSuccessful) {
-                    val state = stateResponse.body()
-                    Log.d(TAG, "State fetched successfully for widget $appWidgetId")
-                    if (state != null) {
-                        selectedPresetId = state.selectedPresetId ?: -1
-                        if (selectedPresetId == -1 && state.selectedPlaylistId != null &&
-                            state.selectedPlaylistId > 0
-                        ) {
-                            selectedPresetId = state.selectedPlaylistId
+                try {
+                    val stateResponse = api.getState()
+                    if (stateResponse.isSuccessful) {
+                        val state = stateResponse.body()
+                        Log.d(TAG, "State fetched successfully for widget $appWidgetId")
+                        if (state != null) {
+                            selectedPresetId = state.selectedPresetId ?: -1
+                            if (selectedPresetId == -1 && state.selectedPlaylistId != null &&
+                                state.selectedPlaylistId > 0
+                            ) {
+                                selectedPresetId = state.selectedPlaylistId
+                            }
                         }
+                    } else {
+                        Log.e(TAG, "State response failed for widget $appWidgetId: ${stateResponse.code()}")
                     }
-                } else {
-                    Log.e(TAG, "State response failed for widget $appWidgetId: ${stateResponse?.code()}")
-                }
-
-                val presetsResponse = try {
-                    presetsDeferred.await()
                 } catch (e: Exception) {
-                    Log.e(TAG, "Error fetching presets concurrently (widget $appWidgetId)", e)
-                    null
+                    Log.e(TAG, "Error fetching state (widget $appWidgetId)", e)
                 }
 
-                if (presetsResponse != null && presetsResponse.isSuccessful) {
-                    val presetsMap = presetsResponse.body()
-                    Log.d(TAG, "Presets fetched: ${presetsMap?.size} for widget $appWidgetId")
-                    if (presetsMap != null) {
-                        savePresetsToCache(presetsMap, moshi)
-                        processPresets(presetsMap)
+                try {
+                    val presetsResponse = api.getPresets()
+                    if (presetsResponse.isSuccessful) {
+                        val presetsMap = presetsResponse.body()
+                        Log.d(TAG, "Presets fetched: ${presetsMap?.size} for widget $appWidgetId")
+                        if (presetsMap != null) {
+                            savePresetsToCache(presetsMap, moshi)
+                            processPresets(presetsMap)
+                        }
+                    } else {
+                        Log.e(TAG, "Error fetching presets for widget $appWidgetId: ${presetsResponse.code()}")
                     }
-                } else {
-                    Log.e(TAG, "Error fetching presets for widget $appWidgetId: ${presetsResponse?.code() ?: "null response"}")
+                } catch (e: Exception) {
+                    Log.e(TAG, "Error fetching presets (widget $appWidgetId)", e)
                 }
             } catch (e: Exception) {
-                Log.e(TAG, "Error fetching presets for widget $appWidgetId", e)
+                Log.e(TAG, "Error fetching data for widget $appWidgetId", e)
             }
         }
     }
@@ -233,6 +240,9 @@ class PresetWidgetRemoteViewsFactory(private val context: Context, intent: Inten
         val fillInIntent = Intent().apply {
             putExtra(PresetWidgetProvider.EXTRA_PRESET_ID, id.toIntOrNull() ?: -1)
             putExtra(PresetWidgetProvider.EXTRA_DEVICE_ADDRESS, deviceAddress)
+            putExtra(PresetWidgetProvider.EXTRA_MAC_ADDRESS, deviceMac)
+            // Unique data URI per preset to ensure the intent system doesn't merge them
+            data = Uri.parse("widget://preset/item/$appWidgetId/$id")
         }
         views.setOnClickFillInIntent(R.id.widget_item, fillInIntent)
 

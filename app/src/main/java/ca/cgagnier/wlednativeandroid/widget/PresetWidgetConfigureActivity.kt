@@ -102,12 +102,18 @@ class PresetWidgetConfigureActivity : ComponentActivity() {
             val prefs = context.getSharedPreferences(PREFS_NAME, 0).edit()
             prefs.putString(PREF_PREFIX_KEY + appWidgetId, device.address)
             prefs.putString(PREF_PREFIX_KEY + appWidgetId + "_name", device.name)
+            prefs.putString(PREF_PREFIX_KEY + appWidgetId + "_mac", device.macAddress)
             prefs.apply()
         }
 
         internal fun loadDeviceAddress(context: Context, appWidgetId: Int): String? {
             val prefs = context.getSharedPreferences(PREFS_NAME, 0)
             return prefs.getString(PREF_PREFIX_KEY + appWidgetId, null)
+        }
+
+        internal fun loadDeviceMacAddress(context: Context, appWidgetId: Int): String? {
+            val prefs = context.getSharedPreferences(PREFS_NAME, 0)
+            return prefs.getString(PREF_PREFIX_KEY + appWidgetId + "_mac", null)
         }
 
         internal fun loadDeviceName(context: Context, appWidgetId: Int): String {
@@ -158,12 +164,3 @@ private fun DeviceItem(device: Device, onClick: (Device) -> Unit) {
 class PresetWidgetConfigureViewModel @Inject constructor(private val deviceRepository: DeviceRepository) : ViewModel() {
     val allDevices: Flow<List<Device>> = deviceRepository.allDevices
 }
-
-val Device.name: String
-    get() = if (customName.isNotEmpty()) {
-        customName
-    } else if (originalName.isNotEmpty()) {
-        originalName
-    } else {
-        address
-    }
